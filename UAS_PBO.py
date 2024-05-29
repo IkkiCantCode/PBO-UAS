@@ -20,12 +20,14 @@ class Pendonor(User):
 class Admin(User):
     def __init__(self, email, username, password):
         super().__init__(email, username, password)
-        self.jenis_donasi = []
         self.pendonor = []
         self.laporan = []
 
     def kelola_jenis_donasi(self, jenis_donasi):
-        self.jenis_donasi.append(jenis_donasi)
+        Jenis_Donasi.add_jenis_donasi(jenis_donasi)
+
+    def lihat_jenis_donasi(self):
+        return Jenis_Donasi.get_jenis_donasi_list()
 
     def lihat_pendonor(self):
         return self.pendonor
@@ -42,9 +44,18 @@ class Admin(User):
         self.pendonor.append(pendonor)
 
 class Jenis_Donasi:
+    jenis_donasi_list = []
     def __init__(self, nama, deskripsi):
         self.nama = nama
         self.deskripsi = deskripsi
+        
+    @classmethod
+    def add_jenis_donasi(self, jenis_donasi):
+        self.jenis_donasi_list.append(jenis_donasi)
+
+    @classmethod
+    def get_jenis_donasi_list(self):
+        return self.jenis_donasi_list
 
 class Donasi:
     def __init__(self, nominal, jenis_donasi, metode_pembayaran):
@@ -53,9 +64,14 @@ class Donasi:
         self.metode_pembayaran = metode_pembayaran
 
 class Metode_Pembayaran:
+    metode_list = ["Bank", "E-Wallet"]
     def __init__(self, metode):
         self.metode = metode
 
+    @classmethod
+    def get_metode(self):
+        return self.metode_list
+    
 class Sistem:
     def __init__(self):
         self.admins = []
@@ -142,12 +158,42 @@ def menu_pendonor(pendonor):
         pilihan = input("Pilih Menu Yang Pendonor Inginkan: ")
 
         if pilihan == "1":
+            no = 0
             os.system("cls")
-            nama_jenis = input("Masukkan Jenis Donasi: ")
+            print("=================================")
+            print("| Donasi |")
+            print("=================================")
+            donasi_list = Jenis_Donasi.get_jenis_donasi_list()
+            for p in donasi_list:
+                no+=1
+                print(f"{no}. {p.nama} {p.deskripsi}")
+            print("=================================")
+            donasi = int(input("Masukkan Jenis Donasi: "))
+            
+            angka = 0
+            for p in donasi_list:
+                angka+=1
+                if donasi == angka:
+                    nama = p.nama
+                    break  
+            
+            jenis_metode = Metode_Pembayaran.get_metode()
+            no = 0
+            for p in jenis_metode:
+                no+=1
+                print(f"{no}. {p}")
+            
+            angka = 0
+            metode = int(input("Masukkan Metode Pembayaran: "))
+            for p in jenis_metode:
+                angka+=1
+                if metode == angka:
+                    met = p
+                    print(met)
+                    break
+            metode_pembayaran = Metode_Pembayaran(met)
             nominal = int(input("Masukkan Nominal Donasi: "))
-            metode = input("Masukkan Metode Pembayaran: ")
-            metode_pembayaran = Metode_Pembayaran(metode)
-            jenis_donasi = Jenis_Donasi(nama_jenis, "")
+            jenis_donasi = Jenis_Donasi(nama, "")
             donasi = Donasi(nominal, jenis_donasi, metode_pembayaran)
             pendonor.menyumbang(donasi)
             print("Donasi Berhasil!")
@@ -174,6 +220,7 @@ def main():
     sistem = Sistem()
     # Hardcoded admin
     sistem.registrasi_user("admin@donasi.com", "admin", "admin", is_admin=True)
+    sistem.registrasi_user("admin@donasi.com", "reza", "reza", is_admin=False)
 
     while True:
         pilihan = menu_utama()
@@ -195,12 +242,8 @@ def main():
             email = input("Masukkan Email: ")
             username = input("Masukkan Username: ")
             password = input("Masukkan Password: ")
-            is_admin = input("Apakah Anda Admin? (yes/no): ").lower() == "yes"
-            user = sistem.registrasi_user(email, username, password, is_admin)
-            if is_admin:
-                print("Admin Berhasil Didaftarkan.")
-            else:
-                print("Pendonor Berhasil Didaftarkan.")
+            user = sistem.registrasi_user(email, username, password, user)
+            print("Registrasi Berhasil.")
         elif pilihan == "3":
             os.system("cls")
             print("                                             ")
