@@ -220,7 +220,7 @@ def main():
     sistem = Sistem()
     # Hardcoded admin
     sistem.registrasi_user("admin@donasi.com", "admin", "admin", is_admin=True)
-    sistem.registrasi_user("admin@donasi.com", "reza", "reza", is_admin=False)
+    sistem.registrasi_user("admin@donasi.com", "user", "user", is_admin=False)
 
     while True:
         pilihan = menu_utama()
@@ -242,7 +242,7 @@ def main():
             email = input("Masukkan Email: ")
             username = input("Masukkan Username: ")
             password = input("Masukkan Password: ")
-            user = sistem.registrasi_user(email, username, password, user)
+            user = sistem.registrasi_user(email, username, password, False )
             print("Registrasi Berhasil.")
         elif pilihan == "3":
             os.system("cls")
