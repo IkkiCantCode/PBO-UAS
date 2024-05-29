@@ -1,5 +1,4 @@
 # Tema : Non-profit
-
 class User:
     def __init__(self, email, username, password):
         self.email = email
@@ -57,20 +56,20 @@ class Metode_Pembayaran:
 
 class Sistem:
     def __init__(self):
-        self.admin = []
+        self.admins = []
         self.pendonor = []
 
     def registrasi_user(self, email, username, password, is_admin=False):
         if is_admin:
             user = Admin(email, username, password)
-            self.admin.append(user)
+            self.admins.append(user)
         else:
             user = Pendonor(email, username, password)
             self.pendonor.append(user)
         return user
 
     def login(self, username, password):
-        for admin in self.admin:
+        for admin in self.admins:
             if admin.username == username and admin.password == password:
                 return admin
         for pendonor in self.pendonor:
@@ -116,13 +115,13 @@ def menu_admin(admin):
         else:
             print("Pilihan Tidak Valid. Silakan Coba Lagi :>")
 
-
 def menu_pendonor(pendonor):
     while True:
         print("     >> SELAMAT DATANG PENDONOR!      ")
         print("        1.| Beri Donasi               ")
         print("        2.| Riwayat Donasi            ")
-        print("        3.| Keluar                    ")
+        print("        3.| Profil                    ")
+        print("        4.| Keluar                    ")
         pilihan = input("Pilih Menu Yang Pendonor Inginkan: ")
 
         if pilihan == "1":
@@ -130,7 +129,7 @@ def menu_pendonor(pendonor):
             nama_jenis = input("Masukkan Jenis Donasi: ")
             metode = input("Masukkan Metode Pembayaran: ")
             metode_pembayaran = Metode_Pembayaran(metode)
-            jenis_donasi = Jenis_Donasi(nama_jenis)
+            jenis_donasi = Jenis_Donasi(nama_jenis, "")
             donasi = Donasi(nominal, jenis_donasi, metode_pembayaran)
             pendonor.menyumbang(donasi)
             print("Donasi Berhasil!")
@@ -140,13 +139,22 @@ def menu_pendonor(pendonor):
             for r in riwayat:
                 print(f"Nominal: {r.nominal}, Jenis Donasi: {r.jenis_donasi.nama}, Metode Pembayaran: {r.metode_pembayaran.metode}")
         elif pilihan == "3":
+            print(f"Nama: {pendonor.username}")
+            total_donasi = sum(donasi.nominal for donasi in pendonor.donasi)
+            print(f"Total Donasi: {total_donasi}")
+            print("Tempat Donasi:")
+            for donasi in pendonor.donasi:
+                print(f"- {donasi.jenis_donasi.nama}")
+        elif pilihan == "4":
             break
         else:
             print("Pilihan Tidak Valid. Silakan Coba Lagi :>")
 
-
 def main():
     sistem = Sistem()
+    # Hardcoded admin
+    sistem.registrasi_user("admin@donasi.com", "admin", "admin", is_admin=True)
+
     while True:
         pilihan = menu_utama()
 
@@ -180,7 +188,6 @@ def main():
             break
         else:
             print("Pilihan Tidak Valid. Silakan Coba Lagi :>")
-
 
 if __name__ == "__main__":
     main()
