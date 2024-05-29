@@ -1,4 +1,6 @@
 # Tema : Non-profit
+
+import os
 class User:
     def __init__(self, email, username, password):
         self.email = email
@@ -78,34 +80,45 @@ class Sistem:
         return None
 
 def menu_utama():
-    print("   .   SELAMAT DATANG DI DONASI CENTER  .  ")
+    os.system("Color B")
+    print("===========================================")
+    print(">>>>  SELAMAT DATANG DI DONASI CENTER  <<<<")
+    print("===========================================")
     print("      .        1. Login              .     ")
     print("         .     2. Registrasi      .        ")
     print("            .  3. Keluar       .           ")
+    print("===========================================")
     pilihan = input("Pilih Menu Yang Anda Inginkan: ")
     return pilihan
 
 def menu_admin(admin):
     while True:
+        os.system("Color B")
+        print("======================================")
         print("       >> SELAMAT DATANG ADMIN!       ")
+        print("======================================")
         print("        1.| Tambah Jenis Donasi       ")
         print("        2.| Lihat Pendonor            ")
         print("        3.| Buat Laporan              ")
         print("        4.| Keluar                    ")
+        print("======================================")
         pilihan = input("Pilih Menu Yang Admin Inginkan: ")
 
         if pilihan == "1":
+            os.system("cls")
             nama = input("Masukkan Jenis Donasi: ")
             deskripsi = input("Masukkan Deskripsi: ")
             jenis_donasi = Jenis_Donasi(nama, deskripsi)
             admin.kelola_jenis_donasi(jenis_donasi)
             print(f"Jenis Donasi '{nama}' Berhasil Ditambahkan!")
         elif pilihan == "2":
+            os.system("cls")
             pendonor_list = admin.lihat_pendonor()
             print("||    Daftar Pendonor   ||: ")
             for p in pendonor_list:
                 print(f"Username: {p.username}, Email: {p.email}")
         elif pilihan == "3":
+            os.system("cls")
             laporan = admin.buat_laporan()
             print("||    Laporan Donasi    ||:")
             print(f"Total Pendonor: {laporan['total_pendonor']}")
@@ -117,16 +130,21 @@ def menu_admin(admin):
 
 def menu_pendonor(pendonor):
     while True:
-        print("     >> SELAMAT DATANG PENDONOR!      ")
+        os.system("Color A")
+        print("======================================")
+        print("      >> SELAMAT DATANG DONATUR!      ")
+        print("======================================")
         print("        1.| Beri Donasi               ")
         print("        2.| Riwayat Donasi            ")
         print("        3.| Profil                    ")
         print("        4.| Keluar                    ")
+        print("======================================")
         pilihan = input("Pilih Menu Yang Pendonor Inginkan: ")
 
         if pilihan == "1":
-            nominal = int(input("Masukkan Nominal Donasi: "))
+            os.system("cls")
             nama_jenis = input("Masukkan Jenis Donasi: ")
+            nominal = int(input("Masukkan Nominal Donasi: "))
             metode = input("Masukkan Metode Pembayaran: ")
             metode_pembayaran = Metode_Pembayaran(metode)
             jenis_donasi = Jenis_Donasi(nama_jenis, "")
@@ -134,11 +152,13 @@ def menu_pendonor(pendonor):
             pendonor.menyumbang(donasi)
             print("Donasi Berhasil!")
         elif pilihan == "2":
+            os.system("cls")
             riwayat = pendonor.riwayat_donasi()
             print("||   Riwayat Donasi Pendonor   ||:")
             for r in riwayat:
                 print(f"Nominal: {r.nominal}, Jenis Donasi: {r.jenis_donasi.nama}, Metode Pembayaran: {r.metode_pembayaran.metode}")
         elif pilihan == "3":
+            os.system("cls")
             print(f"Nama: {pendonor.username}")
             total_donasi = sum(donasi.nominal for donasi in pendonor.donasi)
             print(f"Total Donasi: {total_donasi}")
@@ -159,6 +179,7 @@ def main():
         pilihan = menu_utama()
 
         if pilihan == "1":
+            os.system("cls")
             username = input("Masukkan Username: ")
             password = input("Masukkan Password: ")
             user = sistem.login(username, password)
@@ -170,6 +191,7 @@ def main():
             else:
                 print("Login Gagal. Username atau Password Salah :>")
         elif pilihan == "2":
+            os.system("cls")
             email = input("Masukkan Email: ")
             username = input("Masukkan Username: ")
             password = input("Masukkan Password: ")
@@ -180,6 +202,7 @@ def main():
             else:
                 print("Pendonor Berhasil Didaftarkan.")
         elif pilihan == "3":
+            os.system("cls")
             print("                                             ")
             print("=============================================")
             print("Terima Kasih Telah Menggunakan Donasi Center!")
