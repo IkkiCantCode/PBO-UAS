@@ -65,12 +65,21 @@ class Donasi:
 
 class Metode_Pembayaran:
     metode_list = ["Bank", "E-Wallet"]
+    sub_metode_dict = {
+        "Bank": ["BNI", "Mandiri", "BCA", "BTN"],
+        "E-Wallet": ["Dana", "GoPay", "ShopeePay"]
+    }
+
     def __init__(self, metode):
         self.metode = metode
 
     @classmethod
-    def get_metode(self):
-        return self.metode_list
+    def get_metode(cls):
+        return cls.metode_list
+
+    @classmethod
+    def get_sub_metode(cls, metode):
+        return cls.sub_metode_dict.get(metode, [])
     
 class Sistem:
     def __init__(self):
@@ -145,6 +154,7 @@ def menu_admin(admin):
             print("Pilihan Tidak Valid. Silakan Coba Lagi :>")
 
 def menu_pendonor(pendonor):
+    nominal = 0
     while True:
         os.system("Color A")
         print("======================================")
@@ -158,56 +168,166 @@ def menu_pendonor(pendonor):
         pilihan = input("Pilih Menu Yang Pendonor Inginkan: ")
 
         if pilihan == "1":
-            no = 0
-            os.system("cls")
-            print("=================================")
-            print("| Donasi |")
-            print("=================================")
-            donasi_list = Jenis_Donasi.get_jenis_donasi_list()
-            for p in donasi_list:
-                no+=1
-                print(f"{no}. {p.nama} {p.deskripsi}")
-            print("=================================")
-            donasi = int(input("Masukkan Jenis Donasi: "))
-            
-            angka = 0
-            for p in donasi_list:
-                angka+=1
-                if donasi == angka:
-                    nama = p.nama
-                    break  
-            
-            jenis_metode = Metode_Pembayaran.get_metode()
-            no = 0
-            for p in jenis_metode:
-                no+=1
-                print(f"{no}. {p}")
-            
-            angka = 0
-            metode = int(input("Masukkan Metode Pembayaran: "))
-            for p in jenis_metode:
-                angka+=1
-                if metode == angka:
-                    met = p
-                    print(met)
+            while True:
+                no = 0
+                os.system("cls")
+                print("=================================")
+                print("| Donasi |")
+                print("=================================")
+                donasi_list = Jenis_Donasi.get_jenis_donasi_list()
+                for p in donasi_list:
+                    no += 1
+                    print(f"{no}. {p.nama} {p.deskripsi}")
+                print("=================================")
+                
+                donasi = input("Masukkan Jenis Donasi (0 untuk kembali): ")
+
+                if donasi == "0":
                     break
-            metode_pembayaran = Metode_Pembayaran(met)
-            nominal = int(input("Masukkan Nominal Donasi: "))
+
+                if not donasi.isdigit():
+                    print("Input harus berupa angka. Silakan coba lagi.")
+                    continue
+
+                donasi = int(donasi)
+
+                if donasi < 1 or donasi > len(donasi_list):
+                    print("Pilihan tidak valid! Silakan coba lagi.")
+                    continue
+                
+                angka = 0
+                for p in donasi_list:
+                    angka += 1
+                    if donasi == angka:
+                        nama = p.nama
+                        break 
+                break 
+
+            if donasi == "0":
+                continue
+
+            while True:
+                jenis_metode = Metode_Pembayaran.get_metode()
+                no = 0
+                for p in jenis_metode:
+                    no += 1
+                    print(f"{no}. {p}")
+                
+                metode = input("Masukkan Metode Pembayaran (0 untuk kembali): ")
+
+                if metode == "0":
+                    break
+
+                if not metode.isdigit():
+                    print("Input harus berupa angka. Silakan coba lagi.")
+                    continue
+
+                metode = int(metode)
+
+                if metode < 1 or metode > len(jenis_metode):
+                    print("Pilihan tidak valid! Silakan coba lagi.")
+                    continue
+            
+                
+                met = jenis_metode[metode - 1]
+                print(f"Metode dipilih: {met}")
+
+                sub_metode = Metode_Pembayaran.get_sub_metode(met)
+
+                while True:
+                    no = 0
+                    for sm in sub_metode:
+                        no += 1
+                        print(f"{no}. {sm}")
+
+                    sub_pilihan = input(f"Masukkan pilihan {met} (0 untuk kembali): ")
+
+                    if sub_pilihan == "0":
+                        break
+
+                    if not sub_pilihan.isdigit():
+                        print("Input harus berupa angka. Silakan coba lagi.")
+                        continue
+
+                    sub_pilihan = int(sub_pilihan)
+
+                    if sub_pilihan < 1 or sub_pilihan > len(sub_metode):
+                        print("Pilihan tidak valid! Silakan coba lagi.")
+                        continue
+
+                    sub_met = sub_metode[sub_pilihan - 1]
+                    print(f"Bank Dipilih dipilih: {sub_met}")
+                    break  # keluar dari loop sub-metode jika input valid
+
+                if sub_pilihan == "0":
+                    continue
+
+                # Validasi untuk nomor kartu kredit atau nomor telepon
+                if met == "Bank":
+                    while True:
+                        no_kartu = input("Masukkan Nomor Kartu Kredit (16 digit) (0 untuk kembali): ")
+
+                        if no_kartu == "0":
+                            break
+
+                        if not no_kartu.isdigit() or len(no_kartu) != 16:
+                            print("Nomor kartu kredit harus 16 digit angka. Silakan coba lagi.")
+                            continue
+                        break
+
+                elif met == "E-Wallet":
+                    while True:
+                        no_telepon = input("Masukkan Nomor Telepon E-Wallet (10-12 digit) (0 untuk kembali): ")
+                        if no_telepon == "0":
+                            break
+                        if not no_telepon.isdigit() or not (10 <= len(no_telepon) <= 12):
+                            print("Nomor telepon harus 10-12 digit angka. Silakan coba lagi.")
+                            continue
+                        break
+
+                    if no_telepon == "0":
+                        continue
+
+                if no_kartu == "0":
+                    continue
+
+                break  # keluar dari loop metode pembayaran jika input valid
+
+            if metode == "0":
+                continue
+
+            # Input nominal donasi
+            while True:
+                nominal_input = input("Masukkan Nominal Donasi (0 untuk kembali): ")
+                if nominal_input == "0":
+                    break
+                if not nominal_input.isdigit() or int(nominal_input) == 0:
+                    print("Nominal harus berupa angka dan tidak boleh nol. Silakan coba lagi.")
+                    continue
+                nominal = int(nominal_input)
+                break  # keluar dari loop nominal jika input valid
+
+            if nominal_input == "0":
+                continue
+
+            # Buat objek donasi di luar loop pemeriksaan kembali
+            metode_pembayaran = Metode_Pembayaran(f"{met} - {sub_met}")
             jenis_donasi = Jenis_Donasi(nama, "")
             donasi = Donasi(nominal, jenis_donasi, metode_pembayaran)
             pendonor.menyumbang(donasi)
             print("Donasi Berhasil!")
+
         elif pilihan == "2":
             os.system("cls")
             riwayat = pendonor.riwayat_donasi()
             print("||   Riwayat Donasi Pendonor   ||:")
             for r in riwayat:
-                print(f"Nominal: {r.nominal}, Jenis Donasi: {r.jenis_donasi.nama}, Metode Pembayaran: {r.metode_pembayaran.metode}")
+                print(f"Nominal: Rp. {r.nominal}, Jenis Donasi: {r.jenis_donasi.nama}, Metode Pembayaran: {r.metode_pembayaran.metode}")
         elif pilihan == "3":
             os.system("cls")
             print(f"Nama: {pendonor.username}")
             total_donasi = sum(donasi.nominal for donasi in pendonor.donasi)
-            print(f"Total Donasi: {total_donasi}")
+            print(f"Total Donasi: Rp. {total_donasi}")
             print("Tempat Donasi:")
             for donasi in pendonor.donasi:
                 print(f"- {donasi.jenis_donasi.nama}")
