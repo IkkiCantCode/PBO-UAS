@@ -1,0 +1,3 @@
+Email,Username,Password,Role,Saldo
+admin,admin,admin,Admin,
+321,123,123,Donatur,10000
