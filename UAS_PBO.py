@@ -149,6 +149,7 @@ class DonasiCenter:
             print(f"An error occurred while writing to the CSV file: {e}")
 
     def tambah_donasi(self):
+        jenis = True
         while True:
             nama = input("Masukkan nama donasi (atau '0' untuk kembali): ")
             if nama == "0":
@@ -172,12 +173,16 @@ class DonasiCenter:
                         jenis_donasi_harga[jenis_donasi] = int(harga)
                     else:
                         print(f"Error: Harga untuk jenis donasi '{jenis_donasi}' bukan angka yang valid. Input diabaikan.")
+                        jenis = False
                 else:
                     print(f"Error: Format jenis donasi '{pair}' tidak valid. Harus berupa 'jenis:harga'. Input diabaikan.")
-            
-            donasi = Donasi(nama, deskripsi, jenis_donasi_harga)
-            self.simpan_donasi(donasi)
-            print("Donasi berhasil ditambahkan.")
+                    jenis = False
+            if (jenis):
+                donasi = Donasi(nama, deskripsi, jenis_donasi_harga)
+                self.simpan_donasi(donasi)
+                print("Donasi berhasil ditambahkan.")
+            else:
+                print("Donasi Gagal Ditambahkan")
             return
             
     def ubah_donasi(self):
