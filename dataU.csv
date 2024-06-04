@@ -2,3 +2,4 @@ Email,Username,Password,Role,Saldo
 admin,admin,admin,Admin,
 321,123,123,Donatur,115000
 anooonim@gmail.com,anonim,123,Donatur,200000
+tester1@gmail.com,tester,tester,Donatur,0

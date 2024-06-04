@@ -102,10 +102,10 @@ class DonasiCenter:
         
         for user in users:
             if user.email == donatur.email:
-                print("Email telah tersedia.")
+                print("Email telah terdaftar.")
                 return False
             if user.username == donatur.username:
-                print("Username telah tersedia.")
+                print("Username telah digunakan.")
                 return False
         try:
             with open(self.file_user, mode='a', newline='') as file:
