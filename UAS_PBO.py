@@ -40,6 +40,12 @@ class User:
         
     def getPassword(self):
         return self.password
+    
+    def setSaldo(self, saldo):
+        self.saldo = saldo
+        
+    def getSaldo(self):
+        return self.saldo
 
 class Admin(User):
     def __init__(self, email, username, password, role="Admin"):
@@ -403,6 +409,7 @@ class DonasiCenter:
                     if user['Username'] == donatur.username:
                         user['Email'] = donatur.email
                         user['Password'] = donatur.password
+                        user['Saldo'] = donatur.saldo
                     writer.writerow(user)
             
             print("Data pengguna berhasil diperbarui di file CSV.")
@@ -421,8 +428,8 @@ class DonasiCenter:
             donatur.setPassword(password)
         
         self.update_user_data_in_csv(donatur)
-        print("Profil berhasil diubah.") 
-
+        print("Profil berhasil diubah.")     
+            
     def riwayat_donasi(self, donatur):
         no = 0
         total = 0  # Inisialisasi total di luar loop
@@ -553,6 +560,7 @@ class DonasiCenter:
                             else:
                                 donatur.saldo -= total_harga
                                 print(f"Saldo berhasil digunakan. Sisa saldo Anda: {donatur.saldo}")
+                                self.update_user_data_in_csv(donatur)
                         else:
                             print("Pilihan tidak valid.")
                             continue
