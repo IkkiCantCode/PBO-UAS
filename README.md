@@ -1,5 +1,5 @@
-UAS Projek Akhir Pemrograman Berorientasi Objek
-Kelompok Non-Profit
+UAS Projek Akhir Pemrograman Berorientasi Objek <br>
+Kelompok Non-Profit <br>
 Ketua Kelompok:
 Muhammad Rizky Aulia | 2209106067
 
