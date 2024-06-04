@@ -70,30 +70,51 @@ class DonasiCenter:
         self.file_user = file_user
         self.file_donasi = file_donasi
         self.file_riwayat = file_riwayat
+        
+    def ambil_pengguna(self):
+        users = []
+        try:
+            with open(self.file_user, mode='r', newline='') as file:
+                reader = csv.DictReader(file)
+                for row in reader:
+                    email = row['Email']
+                    username = row['Username']
+                    password = row['Password']
+                    role = row['Role']
+                    
+                    if role == 'Donatur':
+                        try:
+                            saldo = int(row['Saldo'])
+                        except ValueError:
+                            print(f"Invalid saldo value for user {username}, setting saldo to 0.")
+                            saldo = 0
+                        user = Donatur(email, username, password, role, saldo)
+                    else:
+                        user = Admin(email, username, password, role)
+                    
+                    users.append(user)
+        except Exception as e:
+            print(f"An error occurred while reading the CSV file: {e}")
+        return users
     
-    def regisDonatur(self, user):
+    def regisDonatur(self, donatur):
+        users = self.ambil_pengguna()
+        
+        for user in users:
+            if user.email == donatur.email:
+                print("Email telah tersedia.")
+                return False
+            if user.username == donatur.username:
+                print("Username telah tersedia.")
+                return False
         try:
             with open(self.file_user, mode='a', newline='') as file:
-                fieldnames = ['Email', 'Username', 'Password', 'Role', 'Saldo']
-                writer = csv.DictWriter(file, fieldnames=fieldnames)
-                
-                # Check if file is empty to write the header
-                file_is_empty = file.tell() == 0
-                if file_is_empty:
-                    writer.writeheader()
-                
-                user_data = {
-                    'Email': user.email,
-                    'Username': user.username,
-                    'Password': user.password,
-                    'Role': user.role,
-                    'Saldo': user.saldo if isinstance(user, Donatur) else ''
-                }
-                writer.writerow(user_data)
-                print(f"User {user.username} added successfully.")
-                
+                writer = csv.writer(file)
+                writer.writerow([donatur.email, donatur.username, donatur.password, donatur.role, donatur.saldo])
+            return True
         except Exception as e:
             print(f"An error occurred while writing to the CSV file: {e}")
+            return False
 
     def login(self, username, password):
         try:
@@ -108,11 +129,25 @@ class DonasiCenter:
                             return Admin(email, username, password)
                         else:
                             return Donatur(email, username, password, saldo=saldo)
-            print("Login failed: Invalid username or password.")
         except Exception as e:
             print(f"An error occurred while reading the CSV file: {e}")
         return None
     
+# Admin function 
+    def simpan_donasi(self, donasi):
+        try:
+            with open(self.file_donasi, mode='a', newline='') as file:
+                fieldnames = ['Nama', 'Deskripsi', 'Jenis Donasi']
+                writer = csv.DictWriter(file, fieldnames=fieldnames)
+                jenis_donasi_str = ';'.join([f"{jenis}:{harga}" for jenis, harga in donasi.jenis_donasi_harga.items()])
+                writer.writerow({
+                    'Nama': donasi.nama,
+                    'Deskripsi': donasi.deskripsi,
+                    'Jenis Donasi': jenis_donasi_str  
+                })
+        except Exception as e:
+            print(f"An error occurred while writing to the CSV file: {e}")
+
     def tambah_donasi(self):
         while True:
             nama = input("Masukkan nama donasi (atau '0' untuk kembali): ")
@@ -144,21 +179,6 @@ class DonasiCenter:
             self.simpan_donasi(donasi)
             print("Donasi berhasil ditambahkan.")
             return
-
-    def simpan_donasi(self, donasi):
-        try:
-            with open(self.file_donasi, mode='a', newline='') as file:
-                fieldnames = ['Nama', 'Deskripsi', 'Jenis Donasi']
-                writer = csv.DictWriter(file, fieldnames=fieldnames)
-                jenis_donasi_str = ';'.join([f"{jenis}:{harga}" for jenis, harga in donasi.jenis_donasi_harga.items()])
-                writer.writerow({
-                    'Nama': donasi.nama,
-                    'Deskripsi': donasi.deskripsi,
-                    'Jenis Donasi': jenis_donasi_str  # Simpan jenis donasi dan harga sebagai string dipisahkan oleh ';'
-                })
-                print("Donasi berhasil disimpan.")
-        except Exception as e:
-            print(f"An error occurred while writing to the CSV file: {e}")
             
     def ubah_donasi(self):
         while True:
@@ -244,7 +264,6 @@ class DonasiCenter:
                 print(f"An error occurred while writing to the CSV file: {e}")
             return  
 
-
     def hapus_donasi(self):
         while True:
             print("Daftar Donasi:")
@@ -295,18 +314,21 @@ class DonasiCenter:
                 print("Penghapusan donasi dibatalkan.")
                 return  
 
-
     def lihat_donasi(self):
         daftar_donasi = self.ambil_donasi()
         print("Daftar Donasi:")
         for idx, donasi in enumerate(daftar_donasi, start=1):
             jenis_donasi_harga_str = ', '.join([f"{jenis} (Rp{harga})" for jenis, harga in donasi.jenis_donasi_harga.items()])
-            print(f"{idx}. Nama: {donasi.nama}, Deskripsi: {donasi.deskripsi}, Jenis Donasi: {jenis_donasi_harga_str}")
+            print(f"{idx}. Nama: {donasi.nama}\n   Deskripsi: {donasi.deskripsi}\n   Jenis Donasi: {jenis_donasi_harga_str}")
         
         while True:
-            print("| [1]. Ubah Donasi")
-            print("| [2]. Hapus Donasi")
-            print("| [3]. Kembali")
+            print("===========================================")
+            print("|              Kelola Donasi              |")
+            print("===========================================")
+            print("| [1]. Ubah Donasi                        |")
+            print("| [2]. Hapus Donasi                       |")
+            print("| [3]. Kembali                            |")
+            print("===========================================")
             pilihan = input("Pilih Menu Yang Anda Inginkan: ")
             if pilihan == "1":
                 self.ubah_donasi()
@@ -336,11 +358,11 @@ class DonasiCenter:
         while True:
             os.system("Color B")
             print("===========================================")
-            print("Kelola Donasi")
+            print("|              Kelola Donasi              |")
             print("===========================================")
-            print("[1]. Tambah Donasi")
-            print("[2]. Lihat Donasi")
-            print("[3]. Kembali")
+            print("| [1]. Tambah Donasi                      |")
+            print("| [2]. Lihat Donasi                       |")
+            print("| [3]. Kembali                            |")
             print("===========================================")
             pilihan = input("Pilih Menu Yang Anda Inginkan: ")
             if pilihan == "1":
@@ -352,27 +374,28 @@ class DonasiCenter:
             else:
                 print("Pilihan Tidak Valid. Silakan Coba Lagi :>")
                 
-    def simpan_riwayat_donasi(self, donatur, donasi_tujuan, deskripsi_donasi,banyak, jumlah):
+    def laporan_donasi(self):
+        donasi_stats = defaultdict(lambda: {'jumlah_orang': 0, 'total_donasi': 0})
         try:
-            with open(self.file_riwayat, mode='a', newline='') as file:
-                fieldnames = ['Username', 'Nama Donasi', 'Jenis Donasi', 'Banyak', 'Total']
-                writer = csv.DictWriter(file, fieldnames=fieldnames)
-                
-                # Check if file is empty to write the header
-                file_is_empty = file.tell() == 0
-                if file_is_empty:
-                    writer.writeheader()
-                donasi_user = ({
-                    'Username': donatur.username,
-                    'Nama Donasi': donasi_tujuan,
-                    'Jenis Donasi': deskripsi_donasi,
-                    'Banyak': banyak,
-                    'Total': jumlah
-                })
-                writer.writerow(donasi_user)
-                print("Riwayat donasi berhasil disimpan.")
+            with open(self.file_riwayat, mode='r', newline='') as file:
+                reader = csv.DictReader(file)
+                donatur_set = defaultdict(set)
+                for row in reader:
+                    nama_donasi = row['Nama Donasi']
+                    jumlah_donasi = int(row['Total'])
+                    username = row['Username']
+                    
+                    donasi_stats[nama_donasi]['total_donasi'] += jumlah_donasi
+                    if username not in donatur_set[nama_donasi]:
+                        donasi_stats[nama_donasi]['jumlah_orang'] += 1
+                        donatur_set[nama_donasi].add(username)
         except Exception as e:
-            print(f"An error occurred while writing to the CSV file: {e}")
+            print(f"An error occurred while reading the CSV file: {e}")
+            return
+        
+        print("Laporan Donasi:")
+        for nama_donasi, stats in donasi_stats.items():
+            print(f"Nama Donasi: {nama_donasi}, Jumlah Orang: {stats['jumlah_orang']}, Total Donasi: {stats['total_donasi']}")
             
     def lihat_alldonatur(self):
         donatur_dict = defaultdict(int)
@@ -411,8 +434,6 @@ class DonasiCenter:
                         user['Password'] = donatur.password
                         user['Saldo'] = donatur.saldo
                     writer.writerow(user)
-            
-            print("Data pengguna berhasil diperbarui di file CSV.")
         except Exception as e:
             print(f"Terjadi kesalahan saat menyimpan data ke file CSV: {e}")
             
@@ -440,34 +461,11 @@ class DonasiCenter:
                 for row in reader:
                     if row['Username'] == donatur.username:
                         no += 1
-                        print(f"{no}. Nama Donasi: {row['Nama Donasi']}\nJenis Donasi: {row['Jenis Donasi']}\nBanyak: {row['Banyak']}\nTotal: {row['Total']}")
+                        print(f"{no}. Nama Donasi: {row['Nama Donasi']}\n  Jenis Donasi: {row['Jenis Donasi']}\n  Banyak: {row['Banyak']}\n  Total: {row['Total']}")
                         total += int(row['Total'])  # Tambahkan nilai total setiap donasi ke total keseluruhan
                 print(f"Total Donasi: {total}")
         except Exception as e:
             print(f"An error occurred while reading the CSV file: {e}")
-
-    def laporan_donasi(self):
-        donasi_stats = defaultdict(lambda: {'jumlah_orang': 0, 'total_donasi': 0})
-        try:
-            with open(self.file_riwayat, mode='r', newline='') as file:
-                reader = csv.DictReader(file)
-                donatur_set = defaultdict(set)
-                for row in reader:
-                    nama_donasi = row['Nama Donasi']
-                    jumlah_donasi = int(row['Total'])
-                    username = row['Username']
-                    
-                    donasi_stats[nama_donasi]['total_donasi'] += jumlah_donasi
-                    if username not in donatur_set[nama_donasi]:
-                        donasi_stats[nama_donasi]['jumlah_orang'] += 1
-                        donatur_set[nama_donasi].add(username)
-        except Exception as e:
-            print(f"An error occurred while reading the CSV file: {e}")
-            return
-        
-        print("Laporan Donasi:")
-        for nama_donasi, stats in donasi_stats.items():
-            print(f"Nama Donasi: {nama_donasi}, Jumlah Orang: {stats['jumlah_orang']}, Total Donasi: {stats['total_donasi']}")
 
     def beri_donasi(self, donatur):
         daftar_donasi = self.ambil_donasi()
@@ -478,7 +476,7 @@ class DonasiCenter:
         while True:
             print("Daftar Donasi:")
             for idx, donasi in enumerate(daftar_donasi, start=1):
-                print(f"{idx}. Nama: {donasi.nama}, Deskripsi: {donasi.deskripsi}")
+                print(f"{idx}. Nama: {donasi.nama}\n   Deskripsi: {donasi.deskripsi}")
 
             pilihan_donasi_input = input("Pilih donasi yang ingin Anda sumbangkan (atau '0' untuk kembali): ")
             if pilihan_donasi_input == "0":
@@ -564,44 +562,73 @@ class DonasiCenter:
                         else:
                             print("Pilihan tidak valid.")
                             continue
-
+                        
+                        os.system("cls")
+                        print("Donasi Berhasil")
                         self.simpan_riwayat_donasi(donatur, donasi_tujuan.nama, jenis_donasi, banyak_donasi, total_harga)
                         return  
                     break
                 break
             break
-
-    def update_saldo(self, donatur):
-        try:
-            with open(self.file_user, mode='r', newline='') as file:
-                reader = csv.DictReader(file)
-                users = [row for row in reader]
-
-            for user in users:
-                if user['Username'] == donatur.username:
-                    user['Saldo'] = donatur.saldo
-
-            with open(self.file_user, mode='w', newline='') as file:
-                fieldnames = ['Email', 'Username', 'Password', 'Role', 'Saldo']
-                writer = csv.DictWriter(file, fieldnames=fieldnames)
-                writer.writeheader()
-                writer.writerows(users)
-
-            print("Saldo berhasil diperbarui.")
-        except Exception as e:
-            print(f"An error occurred while updating the CSV file: {e}")
         
     def top_up_saldo(self, donatur):
         try:
             jumlah = int(input("Masukkan jumlah saldo yang ingin ditop-up: "))
-            donatur.saldo += jumlah
-            self.update_saldo(donatur)
-            print(f"Top-up berhasil. Saldo Anda sekarang: Rp{donatur.saldo}")
+            while True:
+                print("Pilih metode pembayaran:")
+                print(" [1]. QRIS")
+                print(" [2]. Bank")
+                pilihan_pembayaran = input("Pilih metode pembayaran (atau '0' untuk kembali): ")
+                if pilihan_pembayaran == "0":
+                    return  
+
+                if pilihan_pembayaran == "1":
+                    qr.add_data("QRIS")
+                    qr.make(fit=True)
+                    img = qr.make_image(fill="black", back_color="white")
+                    img.show()
+                elif pilihan_pembayaran == "2":
+                    print("Pilih bank:")
+                    print(" [1]. Bank BNI - 1234567890")
+                    print(" [2]. Bank BRI - 0987654321")
+                    input("Masukkan bank pilihan Anda: ")
+                    print("Silakan transfer ke nomor rekening yang tertera.")
+                else:
+                    print("Pilihan tidak valid.")
+                    continue
+                
+                donatur.saldo += jumlah
+                os.system("cls")
+                print(f"Top-up berhasil. Saldo Anda sekarang: Rp{donatur.saldo}")
+                self.update_user_data_in_csv(donatur)
+                return 
         except ValueError:
             print("Masukkan jumlah yang valid.")
         except Exception as e:
             print(f"Terjadi kesalahan: {e}")
-        
+
+    def simpan_riwayat_donasi(self, donatur, donasi_tujuan, deskripsi_donasi,banyak, jumlah):
+        try:
+            with open(self.file_riwayat, mode='a', newline='') as file:
+                fieldnames = ['Username', 'Nama Donasi', 'Jenis Donasi', 'Banyak', 'Total']
+                writer = csv.DictWriter(file, fieldnames=fieldnames)
+                
+                # Check if file is empty to write the header
+                file_is_empty = file.tell() == 0
+                if file_is_empty:
+                    writer.writeheader()
+                donasi_user = ({
+                    'Username': donatur.username,
+                    'Nama Donasi': donasi_tujuan,
+                    'Jenis Donasi': deskripsi_donasi,
+                    'Banyak': banyak,
+                    'Total': jumlah
+                })
+                writer.writerow(donasi_user)
+                print("Riwayat donasi berhasil disimpan.")
+        except Exception as e:
+            print(f"An error occurred while writing to the CSV file: {e}")
+            
     def menu_profil(self,donatur):
         while True:
             print(donatur.profile())
@@ -640,7 +667,6 @@ class DonasiCenter:
                 print("Pilihan Tidak Valid. Silakan Coba Lagi :>")       
                 
     def menu_donatur(self, donatur):
-        nominal = 0
         while True:
             print(f"Saldo : {donatur.saldo}")
             os.system("Color A")
@@ -673,8 +699,8 @@ class DonasiCenter:
         username = input("Masukkan Username: ")
         password = input("Masukkan Password: ")
         newDonatur = Donatur(email, username, password)
-        self.regisDonatur(newDonatur)
-        print("Registrasi Berhasil.")
+        if self.regisDonatur(newDonatur):
+            print("Registrasi Berhasil.")
 
     def login_menu(self):
         os.system("cls")
@@ -688,7 +714,7 @@ class DonasiCenter:
             else:
                 self.menu_admin()
         else:
-            print("Login failed.")
+            print("Username atau Password anda salah.")
 
     def main_menu(self):
         while True:
@@ -696,9 +722,9 @@ class DonasiCenter:
             print("===========================================")
             print(">>>>  SELAMAT DATANG DI DONASI CENTER  <<<<")
             print("===========================================")
-            print("      .        1. Login              .     ")
-            print("         .     2. Registrasi      .        ")
-            print("            .  3. Keluar       .           ")
+            print("| [1]. Login                              |")
+            print("| [2]. Registrasi                         |")
+            print("| [3]. Keluar                             |")
             print("===========================================")
             pilihan = input("Pilih Menu Yang Anda Inginkan: ")
             if pilihan == "1":
