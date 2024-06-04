@@ -142,19 +142,44 @@ class DonasiCenter:
         try:
             idx_donasi = int(input("Pilih donasi yang ingin diubah: ")) - 1
             donasi_terpilih = daftar_donasi[idx_donasi]
-            deskripsi_baru = input("Masukkan deskripsi baru untuk donasi ini: ")
+            print("1. Nama Donasi")
+            print("2. Deskripsi")
+            print("3. Jenis Donasi")
+            pilihan = input("Pilih data yang ingin diubah: ")
+            if pilihan == "1":
+                nama_baru = input("Masukkan nama baru untuk donasi ini: ")
+                donasi_terpilih.nama = nama_baru
+            elif pilihan == "2":
+                deskripsi_baru = input("Masukkan deskripsi baru untuk donasi ini: ")
+                donasi_terpilih.deskripsi = deskripsi_baru
+            elif pilihan == "3":
+                jenis_donasi_baru = input("Masukkan jenis donasi baru (pisahkan dengan '/'): ")
+                jenis_donasi = jenis_donasi_baru.split('/')
+                donasi_terpilih.jenis_donasi_harga = {item.split(':')[0]: int(item.split(':')[1]) for item in jenis_donasi}
+            else:
+                print("Pilihan tidak valid.")
+                return
             
-            # Update deskripsi donasi yang dipilih
-            donasi_terpilih.deskripsi = deskripsi_baru
+            # Buka file CSV dengan mode read-write ('r+')
+            with open(self.file_donasi, mode='w', newline='') as file:
+                fieldnames = ['Nama', 'Deskripsi', 'Jenis Donasi']
+                writer = csv.DictWriter(file, fieldnames=fieldnames)
+                writer.writeheader()
+                for donasi in daftar_donasi:
+                    writer.writerow({
+                        'Nama': donasi.nama,
+                        'Deskripsi': donasi.deskripsi,
+                        'Jenis Donasi': ';'.join([f"{jenis}:{harga}" for jenis, harga in donasi.jenis_donasi_harga.items()])
+                    })
             
-            # Simpan perubahan ke dalam file CSV
-            self.simpan_donasi(donasi_terpilih)
-            
-            print("Deskripsi donasi berhasil diubah.")
+            print("Donasi berhasil diubah.")
         except IndexError:
             print("Nomor donasi tidak valid.")
         except ValueError:
             print("Masukkan nomor donasi yang valid.")
+        except Exception as e:
+            print(f"An error occurred while writing to the CSV file: {e}")
+
 
     def hapus_donasi(self):
         print("Daftar Donasi:")
@@ -163,15 +188,25 @@ class DonasiCenter:
             print(f"{idx}. Nama: {donasi.nama}, Deskripsi: {donasi.deskripsi}")
         
         try:
-            idx_donasi = int(input("Pilih donasi yangingin dihapus: ")) - 1
+            idx_donasi = int(input("Pilih donasi yang ingin dihapus: ")) - 1
             donasi_terpilih = daftar_donasi[idx_donasi]
             confirm = input(f"Apakah Anda yakin ingin menghapus donasi {donasi_terpilih.nama}? (Y/N): ")
             if confirm.lower() == 'y':
-            # Hapus donasi dari daftar
+                # Hapus donasi dari daftar
                 daftar_donasi.pop(idx_donasi)
                 
-                # Simpan perubahan ke dalam file CSV
-                self.simpan_donasi(daftar_donasi)
+                # Simpan ulang seluruh entri donasi ke dalam file CSV
+                with open(self.file_donasi, mode='w', newline='') as file:
+                    fieldnames = ['Nama', 'Deskripsi', 'Jenis Donasi']
+                    writer = csv.DictWriter(file, fieldnames=fieldnames)
+                    writer.writeheader()
+                    for donasi in daftar_donasi:
+                        jenis_donasi_str = ';'.join([f"{jenis}:{harga}" for jenis, harga in donasi.jenis_donasi_harga.items()])
+                        writer.writerow({
+                            'Nama': donasi.nama,
+                            'Deskripsi': donasi.deskripsi,
+                            'Jenis Donasi': jenis_donasi_str
+                        })
                 
                 print("Donasi berhasil dihapus.")
             else:
@@ -180,6 +215,8 @@ class DonasiCenter:
             print("Nomor donasi tidak valid.")
         except ValueError:
             print("Masukkan nomor donasi yang valid.")
+        except Exception as e:
+            print(f"An error occurred while writing to the CSV file: {e}")
 
     def lihat_donasi(self):
         daftar_donasi = self.ambil_donasi()
@@ -230,10 +267,8 @@ class DonasiCenter:
             pilihan = input("Pilih Menu Yang Anda Inginkan: ")
             if pilihan == "1":
                 self.tambah_donasi()
-                break
             elif pilihan == "2":
                 self.lihat_donasi()
-                break
             elif pilihan == "3":
                 break
             else:
