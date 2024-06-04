@@ -3,7 +3,8 @@ import os
 from enum import Enum
 from collections import defaultdict
 import qrcode;
-import image;
+from PIL import Image
+
 
 qr = qrcode.QRCode(
     version = 10,
@@ -107,16 +108,36 @@ class DonasiCenter:
         return None
     
     def tambah_donasi(self):
-        nama = input("Masukkan nama donasi: ")
-        deskripsi = input("Masukkan deskripsi donasi: ")
-        jenis_donasi_harga_input = input("Masukkan jenis donasi (pisahkan dengan '/'): ")
-        jenis_donasi_harga_pairs = jenis_donasi_harga_input.split('/')
-        jenis_donasi_harga = {}
-        for pair in jenis_donasi_harga_pairs:
-            jenis_donasi, harga = pair.split(':')
-            jenis_donasi_harga[jenis_donasi] = int(harga)
-        donasi = Donasi(nama, deskripsi, jenis_donasi_harga)
-        self.simpan_donasi(donasi)
+        while True:
+            nama = input("Masukkan nama donasi (atau '0' untuk kembali): ")
+            if nama == "0":
+                return  
+
+            deskripsi = input("Masukkan deskripsi donasi (atau '0' untuk kembali): ")
+            if deskripsi == "0":
+                return  
+
+            jenis_donasi_harga_input = input("Masukkan jenis donasi (pisahkan dengan '/') (atau '0' untuk kembali): ")
+            if jenis_donasi_harga_input == "0":
+                return  
+
+            jenis_donasi_harga_pairs = jenis_donasi_harga_input.split('/')
+            jenis_donasi_harga = {}
+            
+            for pair in jenis_donasi_harga_pairs:
+                if ':' in pair:
+                    jenis_donasi, harga = pair.split(':', 1)
+                    if harga.isdigit():
+                        jenis_donasi_harga[jenis_donasi] = int(harga)
+                    else:
+                        print(f"Error: Harga untuk jenis donasi '{jenis_donasi}' bukan angka yang valid. Input diabaikan.")
+                else:
+                    print(f"Error: Format jenis donasi '{pair}' tidak valid. Harus berupa 'jenis:harga'. Input diabaikan.")
+            
+            donasi = Donasi(nama, deskripsi, jenis_donasi_harga)
+            self.simpan_donasi(donasi)
+            print("Donasi berhasil ditambahkan.")
+            return
 
     def simpan_donasi(self, donasi):
         try:
@@ -134,89 +155,140 @@ class DonasiCenter:
             print(f"An error occurred while writing to the CSV file: {e}")
             
     def ubah_donasi(self):
-        print("Daftar Donasi:")
-        daftar_donasi = self.ambil_donasi()
-        for idx, donasi in enumerate(daftar_donasi, start=1):
-            print(f"{idx}. Nama: {donasi.nama}, Deskripsi: {donasi.deskripsi}")
-        
-        try:
-            idx_donasi = int(input("Pilih donasi yang ingin diubah: ")) - 1
+        while True:
+            print("Daftar Donasi:")
+            daftar_donasi = self.ambil_donasi()
+            for idx, donasi in enumerate(daftar_donasi, start=1):
+                print(f"{idx}. Nama: {donasi.nama}, Deskripsi: {donasi.deskripsi}")
+
+            idx_donasi_input = input("Pilih donasi yang ingin diubah (atau '0' untuk kembali): ")
+            if idx_donasi_input == "0":
+                return  
+
+            if not idx_donasi_input.isdigit():
+                print("Masukkan nomor donasi yang valid.")
+                continue
+            
+            idx_donasi = int(idx_donasi_input) - 1
+            if idx_donasi < 0 or idx_donasi >= len(daftar_donasi):
+                print("Nomor donasi tidak valid.")
+                continue
+
             donasi_terpilih = daftar_donasi[idx_donasi]
             print("1. Nama Donasi")
             print("2. Deskripsi")
             print("3. Jenis Donasi")
-            pilihan = input("Pilih data yang ingin diubah: ")
+            pilihan = input("Pilih data yang ingin diubah (atau '0' untuk kembali): ")
+            if pilihan == "0":
+                return 
+
             if pilihan == "1":
-                nama_baru = input("Masukkan nama baru untuk donasi ini: ")
+                nama_baru = input("Masukkan nama baru untuk donasi ini (atau '0' untuk kembali): ")
+                if nama_baru == "0":
+                    continue
                 donasi_terpilih.nama = nama_baru
             elif pilihan == "2":
-                deskripsi_baru = input("Masukkan deskripsi baru untuk donasi ini: ")
+                deskripsi_baru = input("Masukkan deskripsi baru untuk donasi ini (atau '0' untuk kembali): ")
+                if deskripsi_baru == "0":
+                    continue 
                 donasi_terpilih.deskripsi = deskripsi_baru
             elif pilihan == "3":
-                jenis_donasi_baru = input("Masukkan jenis donasi baru (pisahkan dengan '/'): ")
-                jenis_donasi = jenis_donasi_baru.split('/')
-                donasi_terpilih.jenis_donasi_harga = {item.split(':')[0]: int(item.split(':')[1]) for item in jenis_donasi}
+                jenis_donasi_baru = input("Masukkan jenis donasi baru (pisahkan dengan '/') (atau '0' untuk kembali): ")
+                if jenis_donasi_baru == "0":
+                    continue  
+                jenis_donasi_pairs = jenis_donasi_baru.split('/')
+                jenis_donasi_harga = {}
+                valid_input = True
+                for pair in jenis_donasi_pairs:
+                    if ':' in pair:
+                        jenis_donasi, harga = pair.split(':', 1)
+                        if harga.isdigit():
+                            jenis_donasi_harga[jenis_donasi] = int(harga)
+                        else:
+                            print(f"Error: Harga untuk jenis donasi '{jenis_donasi}' bukan angka yang valid. Input diabaikan.")
+                            valid_input = False
+                            break
+                    else:
+                        print(f"Error: Format jenis donasi '{pair}' tidak valid. Harus berupa 'jenis:harga'. Input diabaikan.")
+                        valid_input = False
+                        break
+                
+                if valid_input:
+                    donasi_terpilih.jenis_donasi_harga = jenis_donasi_harga
+                else:
+                    continue 
             else:
                 print("Pilihan tidak valid.")
-                return
-            
-            # Buka file CSV dengan mode read-write ('r+')
-            with open(self.file_donasi, mode='w', newline='') as file:
-                fieldnames = ['Nama', 'Deskripsi', 'Jenis Donasi']
-                writer = csv.DictWriter(file, fieldnames=fieldnames)
-                writer.writeheader()
-                for donasi in daftar_donasi:
-                    writer.writerow({
-                        'Nama': donasi.nama,
-                        'Deskripsi': donasi.deskripsi,
-                        'Jenis Donasi': ';'.join([f"{jenis}:{harga}" for jenis, harga in donasi.jenis_donasi_harga.items()])
-                    })
-            
-            print("Donasi berhasil diubah.")
-        except IndexError:
-            print("Nomor donasi tidak valid.")
-        except ValueError:
-            print("Masukkan nomor donasi yang valid.")
-        except Exception as e:
-            print(f"An error occurred while writing to the CSV file: {e}")
+                continue
 
-
-    def hapus_donasi(self):
-        print("Daftar Donasi:")
-        daftar_donasi = self.ambil_donasi()
-        for idx, donasi in enumerate(daftar_donasi, start=1):
-            print(f"{idx}. Nama: {donasi.nama}, Deskripsi: {donasi.deskripsi}")
-        
-        try:
-            idx_donasi = int(input("Pilih donasi yang ingin dihapus: ")) - 1
-            donasi_terpilih = daftar_donasi[idx_donasi]
-            confirm = input(f"Apakah Anda yakin ingin menghapus donasi {donasi_terpilih.nama}? (Y/N): ")
-            if confirm.lower() == 'y':
-                # Hapus donasi dari daftar
-                daftar_donasi.pop(idx_donasi)
-                
-                # Simpan ulang seluruh entri donasi ke dalam file CSV
+            # Save changes to the CSV file
+            try:
                 with open(self.file_donasi, mode='w', newline='') as file:
                     fieldnames = ['Nama', 'Deskripsi', 'Jenis Donasi']
                     writer = csv.DictWriter(file, fieldnames=fieldnames)
                     writer.writeheader()
                     for donasi in daftar_donasi:
-                        jenis_donasi_str = ';'.join([f"{jenis}:{harga}" for jenis, harga in donasi.jenis_donasi_harga.items()])
                         writer.writerow({
                             'Nama': donasi.nama,
                             'Deskripsi': donasi.deskripsi,
-                            'Jenis Donasi': jenis_donasi_str
+                            'Jenis Donasi': ';'.join([f"{jenis}:{harga}" for jenis, harga in donasi.jenis_donasi_harga.items()])
                         })
-                
-                print("Donasi berhasil dihapus.")
+                print("Donasi berhasil diubah.")
+            except Exception as e:
+                print(f"An error occurred while writing to the CSV file: {e}")
+            return  
+
+
+    def hapus_donasi(self):
+        while True:
+            print("Daftar Donasi:")
+            daftar_donasi = self.ambil_donasi()
+            for idx, donasi in enumerate(daftar_donasi, start=1):
+                print(f"{idx}. Nama: {donasi.nama}, Deskripsi: {donasi.deskripsi}")
+
+            idx_donasi_input = input("Pilih donasi yang ingin dihapus (atau '0' untuk kembali): ")
+            if idx_donasi_input == "0":
+                return 
+
+            if not idx_donasi_input.isdigit():
+                print("Masukkan nomor donasi yang valid.")
+                continue
+            
+            idx_donasi = int(idx_donasi_input) - 1
+            if idx_donasi < 0 or idx_donasi >= len(daftar_donasi):
+                print("Nomor donasi tidak valid.")
+                continue
+
+            donasi_terpilih = daftar_donasi[idx_donasi]
+            confirm = input(f"Apakah Anda yakin ingin menghapus donasi {donasi_terpilih.nama}? (Y/N, atau '0' untuk kembali): ")
+            if confirm == "0":
+                continue  
+
+            if confirm.lower() == 'y':
+                # Hapus donasi dari daftar
+                daftar_donasi.pop(idx_donasi)
+
+                # Simpan ulang seluruh entri donasi ke dalam file CSV
+                try:
+                    with open(self.file_donasi, mode='w', newline='') as file:
+                        fieldnames = ['Nama', 'Deskripsi', 'Jenis Donasi']
+                        writer = csv.DictWriter(file, fieldnames=fieldnames)
+                        writer.writeheader()
+                        for donasi in daftar_donasi:
+                            jenis_donasi_str = ';'.join([f"{jenis}:{harga}" for jenis, harga in donasi.jenis_donasi_harga.items()])
+                            writer.writerow({
+                                'Nama': donasi.nama,
+                                'Deskripsi': donasi.deskripsi,
+                                'Jenis Donasi': jenis_donasi_str
+                            })
+                    print("Donasi berhasil dihapus.")
+                except Exception as e:
+                    print(f"An error occurred while writing to the CSV file: {e}")
+                return
             else:
                 print("Penghapusan donasi dibatalkan.")
-        except IndexError:
-            print("Nomor donasi tidak valid.")
-        except ValueError:
-            print("Masukkan nomor donasi yang valid.")
-        except Exception as e:
-            print(f"An error occurred while writing to the CSV file: {e}")
+                return  
+
 
     def lihat_donasi(self):
         daftar_donasi = self.ambil_donasi()
@@ -312,7 +384,7 @@ class DonasiCenter:
         # Sort donatur by total donation amount in descending order
         sorted_donatur = sorted(donatur_dict.items(), key=lambda x: x[1], reverse=True)
         
-        print("10 Penyumbang Tertinggi:")
+        print("Penyumbang Tertinggi:")
         for idx, (username, total_donasi) in enumerate(sorted_donatur[:10], start=1):
             print(f"{idx}. Username: {username}, Total Donasi: {total_donasi}")
         
@@ -396,79 +468,101 @@ class DonasiCenter:
             print("Belum ada donasi yang tersedia.")
             return
 
-        print("Daftar Donasi:")
-        for idx, donasi in enumerate(daftar_donasi, start=1):
-            print(f"{idx}. Nama: {donasi.nama}, Deskripsi: {donasi.deskripsi}")
-        
-        try:
-            pilihan_donasi = int(input("Pilih donasi yang ingin Anda sumbangkan: "))
+        while True:
+            print("Daftar Donasi:")
+            for idx, donasi in enumerate(daftar_donasi, start=1):
+                print(f"{idx}. Nama: {donasi.nama}, Deskripsi: {donasi.deskripsi}")
+
+            pilihan_donasi_input = input("Pilih donasi yang ingin Anda sumbangkan (atau '0' untuk kembali): ")
+            if pilihan_donasi_input == "0":
+                return  
+
+            if not pilihan_donasi_input.isdigit():
+                print("Masukkan nomor yang valid.")
+                continue
+            
+            pilihan_donasi = int(pilihan_donasi_input)
             if pilihan_donasi < 1 or pilihan_donasi > len(daftar_donasi):
                 print("Pilihan tidak valid.")
-                return
-        except ValueError:
-            print("Masukkan nomor yang valid.")
-            return
-        
-        donasi_tujuan = daftar_donasi[pilihan_donasi - 1]
-        
-        print("Jenis Donasi yang tersedia:")
-        for idx, (jenis, harga) in enumerate(donasi_tujuan.jenis_donasi_harga.items(), start=1):
-            print(f"{idx}. {jenis} (Rp{harga})")
-        
-        try:
-            pilihan_jenis = int(input("Pilih jenis donasi: "))
-            if pilihan_jenis < 1 or pilihan_jenis > len(donasi_tujuan.jenis_donasi_harga):
-                print("Pilihan tidak valid.")
-                return
-        except ValueError:
-            print("Masukkan nomor yang valid.")
-            return
-        
-        jenis_donasi = list(donasi_tujuan.jenis_donasi_harga.keys())[pilihan_jenis - 1]
-        harga = donasi_tujuan.jenis_donasi_harga[jenis_donasi]
-        
-        try:
-            banyak_donasi = int(input("Masukkan jumlah donasi: "))
-            if banyak_donasi < 1:
-                print("Jumlah donasi")
-        except ValueError:
-            print("Masukkan jumlah yang valid.")
-            return
-        
-        total_harga = harga * banyak_donasi
-        
-        print(f"Total yang harus dibayar: Rp{total_harga}")
-        
-        print("Pilih metode pembayaran:")
-        print("1. QRIS")
-        print("2. Bank")
-        print("3. Saldo")
-        pilihan_pembayaran = input("Pilih metode pembayaran: ")
-        
-        if pilihan_pembayaran == "1":
-            qr.add_data(donasi_tujuan)
-            qr.make(fit = True)
-            img = qr.make_image(fill = "black", back_color = "white")
-            img.show()
-        elif pilihan_pembayaran == "2":
-            print("Pilih bank:")
-            print("1. Bank A - 1234567890")
-            print("2. Bank B - 0987654321")
-            input("Masukkan bank pilihan Anda: ")
-            print("Silakan transfer ke nomor rekening yang tertera.")
-        elif pilihan_pembayaran == "3":
-            if donatur.saldo < total_harga:
-                print("Saldo Anda tidak mencukupi.")
-                return
-            else:
-                donatur.saldo -= total_harga
-                print(f"Saldo berhasil digunakan. Sisa saldo Anda: {donatur.saldo}")
-        else:
-            print("Pilihan tidak valid.")
-            return
-        
-        self.simpan_riwayat_donasi(donatur, donasi_tujuan.nama, jenis_donasi, banyak_donasi, total_harga)
-        
+                continue
+
+            donasi_tujuan = daftar_donasi[pilihan_donasi - 1]
+
+            while True:
+                print("Jenis Donasi yang tersedia:")
+                for idx, (jenis, harga) in enumerate(donasi_tujuan.jenis_donasi_harga.items(), start=1):
+                    print(f"{idx}. {jenis} (Rp{harga})")
+
+                pilihan_jenis_input = input("Pilih jenis donasi (atau '0' untuk kembali): ")
+                if pilihan_jenis_input == "0":
+                    break  
+
+                if not pilihan_jenis_input.isdigit():
+                    print("Masukkan nomor yang valid.")
+                    continue
+                
+                pilihan_jenis = int(pilihan_jenis_input)
+                if pilihan_jenis < 1 or pilihan_jenis > len(donasi_tujuan.jenis_donasi_harga):
+                    print("Pilihan tidak valid.")
+                    continue
+
+                jenis_donasi = list(donasi_tujuan.jenis_donasi_harga.keys())[pilihan_jenis - 1]
+                harga = donasi_tujuan.jenis_donasi_harga[jenis_donasi]
+
+                while True:
+                    banyak_donasi_input = input("Masukkan jumlah donasi (atau '0' untuk kembali): ")
+                    if banyak_donasi_input == "0":
+                        break 
+
+                    if not banyak_donasi_input.isdigit():
+                        print("Masukkan jumlah yang valid.")
+                        continue
+
+                    banyak_donasi = int(banyak_donasi_input)
+                    if banyak_donasi < 1:
+                        print("Jumlah donasi harus lebih dari 0.")
+                        continue
+
+                    total_harga = harga * banyak_donasi
+                    print(f"Total yang harus dibayar: Rp{total_harga}")
+
+                    while True:
+                        print("Pilih metode pembayaran:")
+                        print("1. QRIS")
+                        print("2. Bank")
+                        print("3. Saldo")
+                        pilihan_pembayaran = input("Pilih metode pembayaran (atau '0' untuk kembali): ")
+                        if pilihan_pembayaran == "0":
+                            break  
+
+                        if pilihan_pembayaran == "1":
+                            qr.add_data(donasi_tujuan)
+                            qr.make(fit=True)
+                            img = qr.make_image(fill="black", back_color="white")
+                            img.show()
+                        elif pilihan_pembayaran == "2":
+                            print("Pilih bank:")
+                            print("1. Bank A - 1234567890")
+                            print("2. Bank B - 0987654321")
+                            input("Masukkan bank pilihan Anda: ")
+                            print("Silakan transfer ke nomor rekening yang tertera.")
+                        elif pilihan_pembayaran == "3":
+                            if donatur.saldo < total_harga:
+                                print("Saldo Anda tidak mencukupi.")
+                                continue
+                            else:
+                                donatur.saldo -= total_harga
+                                print(f"Saldo berhasil digunakan. Sisa saldo Anda: {donatur.saldo}")
+                        else:
+                            print("Pilihan tidak valid.")
+                            continue
+
+                        self.simpan_riwayat_donasi(donatur, donasi_tujuan.nama, jenis_donasi, banyak_donasi, total_harga)
+                        return  
+                    break
+                break
+            break
+
     def update_saldo(self, donatur):
         try:
             with open(self.file_user, mode='r', newline='') as file:
@@ -505,7 +599,7 @@ class DonasiCenter:
             print(donatur.profile())
             print(" [1]. Ubah")
             print(" [2]. Keluar")
-            pilihan = input("pilihan")
+            pilihan = input("Pilihan : ")
             if pilihan == "1":
                 self.ubah_profil(donatur)
             elif pilihan == "2":
