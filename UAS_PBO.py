@@ -666,7 +666,7 @@ class DonasiCenter:
                 self.lihat_alldonatur()
             elif pilihan == "3":
                 self.laporan_donasi()
-            elif pilihan == "5":
+            elif pilihan == "4":
                 break
             else:
                 print("Pilihan Tidak Valid. Silakan Coba Lagi :>")       
